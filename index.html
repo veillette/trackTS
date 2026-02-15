@@ -3,7 +3,7 @@
 
     <head>
         <meta charset="UTF-8">
-        <title>JSTrack v1.0</title>
+        <title>trackTS v1.0</title>
         <link rel="stylesheet" href="src/handsontable.full.css">
         <link rel="stylesheet" href="src/dragula.min.css">
         <link rel="stylesheet" href="src/colorpicker/color-picker.min.css">
@@ -66,40 +66,31 @@
             </div>
             <div id="modal-container" class="active launch">
                 <div id="launch" class="modal active">
-					<img src="info/logo.png" alt="jsTrack Logo" id="modal-logo">
+					<img src="info/logo.png" alt="trackTS Logo" id="modal-logo">
                     <div id="file-input-container">
                         <div class="area" id="file-drop-area">
                             <div class="area-content">
-                                <div class="text">Drag a video or .jstrack file here to begin, or</div>
+                                <div class="text">Drag a video or .trackTS file here to begin, or</div>
                                 <div class="launch-buttons">
                                     <label for="file-input" class="button">Select Local File</label>
                                     <button id="pick" disabled=true>Select From Drive</button>
                                 </div>
-                                <a id="info-link" href="info">What is jsTrack?</a>
+                                <a id="info-link" href="info">What is trackTS?</a>
                             </div>
                         </div>
-                        <input type="file" id="file-input" accept=".jstrack,.mp4,.m4v">
+                        <input type="file" id="file-input" accept=".trackTS,.mp4,.m4v">
                     </div>
                 </div>
             </div>
         </div>
         <button id="help-fab" class="help-button"></button>
-        <a id="paypal-fab" href="https://paypal.me/lucademian" target="_blank" title="Donate for hosting"></a>
-        <a id="github-fab" href="https://github.com/lucadem1313/jsTrack" target="_blank"></a>
+        <a id="github-fab" href="https://github.com/veillette/trackTS" target="_blank"></a>
         <video id="video" autoplay muted></video>
         <video id="video-clone" autoplay muted></video>
 
         <div id="fullscreen-loader"></div>
 		
 		<!-- Global site tag (gtag.js) - Google Analytics -->
-		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-148513230-1"></script>
-		<script>
-		  window.dataLayer = window.dataLayer || [];
-		  function gtag(){dataLayer.push(arguments);}
-		  gtag('js', new Date());
-
-		  gtag('config', 'UA-148513230-1');
-		</script>
         <script type="text/javascript" src='src/createjs.min.js'></script>
         <script type="text/javascript" src='src/math.min.js'></script>
         <script type="text/javascript" src='src/handsontable.min.js'></script>
