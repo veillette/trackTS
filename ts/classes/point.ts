@@ -8,7 +8,7 @@
  * any later version.
  */
 
-import '../functions';
+import { roundSig, roundTo } from '../functions';
 import type { Axes } from './axes';
 import type { Frame } from './frame';
 import type { Scale } from './scale';
@@ -174,23 +174,24 @@ export class Point {
 			const location = axes.convert(this.x, this.y);
 
 			const data: PointExportData = {
-				t: (
+				t: roundSig(
 					this.track.project.videoSpeed *
-					(this.frame.time - this.track.timeline.getFrameStart(this.track.timeline.startFrame))
-				).roundSig(6),
+						(this.frame.time - this.track.timeline.getFrameStart(this.track.timeline.startFrame)),
+					6,
+				),
 				pixels: { x: 0, y: 0 },
 				scaled: { x: 0, y: 0 },
 			};
 
-			data.pixels.x = location.x.roundTo(5);
-			data.pixels.y = location.y.roundTo(5);
+			data.pixels.x = roundTo(location.x, 5);
+			data.pixels.y = roundTo(location.y, 5);
 
 			if (scale === null || scale === undefined) {
-				data.scaled.x = location.x.roundTo(5);
-				data.scaled.y = location.y.roundTo(5);
+				data.scaled.x = roundTo(location.x, 5);
+				data.scaled.y = roundTo(location.y, 5);
 			} else {
-				data.scaled.x = scale.convert(location.x).number.roundTo(5);
-				data.scaled.y = scale.convert(location.y).number.roundTo(5);
+				data.scaled.x = roundTo(scale.convert(location.x).number, 5);
+				data.scaled.y = roundTo(scale.convert(location.y).number, 5);
 			}
 
 			return data;

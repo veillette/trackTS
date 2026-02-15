@@ -3,7 +3,6 @@
  * All modules import from here to access shared state.
  */
 
-import './functions';
 import { Modal } from './classes/modal';
 import { Project } from './classes/project';
 import { Timeline } from './classes/timeline';

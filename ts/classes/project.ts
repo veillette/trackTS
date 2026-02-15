@@ -8,12 +8,16 @@
  * any later version.
  */
 
-import '../functions';
+import { roundTo } from '../functions';
 import { Axes, type Coordinate } from './axes';
+import { CoordinateMapper } from './coordinate-mapper';
+import { type LoadFileData, type ProjectSaveFile, ProjectSerializer } from './project-serializer';
 import { Scale } from './scale';
 import type { TableRowData } from './table';
 import type { Timeline } from './timeline';
 import { Track } from './track';
+
+export type { ProjectSaveFile } from './project-serializer';
 
 type ProjectCallback = (this: Project, args: unknown[]) => void;
 type ProjectModeCallback = (this: Project, mode: string, lastMode: string) => void;
@@ -45,63 +49,10 @@ interface ProjectState {
 	default(): void;
 }
 
-interface SaveScaleData {
-	size: string;
-	color: string;
-	nodes: [Coordinate, Coordinate];
-}
-
-interface SaveAxesData {
-	position: { x: number; y: number; rotation: number };
-	color: string;
-}
-
-interface SaveTrackInfo {
-	name: string;
-	color: string;
-	points: Record<string, Coordinate>;
-	hidden: boolean;
-}
-
-interface SaveData {
-	name: string;
-	duration: number;
-	video: HTMLVideoElement;
-	fps: number;
-	currentFrame: number;
-	uid: number;
-	startFrame: number;
-	endFrame: number;
-	videoName: string;
-	videoSpeed: number;
-	scale?: SaveScaleData;
-	axes?: SaveAxesData;
-	activeTrack?: string;
-	tracks?: Record<string, SaveTrackInfo>;
-}
-
-interface MetaInfo {
-	date: string;
-	createdWith: string;
-	appVersion: number;
-	fileVersion: number;
-}
-
-export interface ProjectSaveFile {
-	meta: MetaInfo;
-	project: SaveData;
-}
-
-interface LoadFileData {
-	meta?: { fileVersion: number };
-	project?: Record<string, unknown>;
-	[key: string]: unknown;
-}
-
 export class Project {
 	name: string;
 	created: boolean;
-	uid: number;
+	uid: string;
 	timeline: Timeline;
 	stage: createjs.Stage;
 	videoName: string;
@@ -127,6 +78,8 @@ export class Project {
 	handsOnTable: Handsontable;
 	positioning: ProjectPositioning;
 	state: ProjectState;
+	readonly coordinateMapper: CoordinateMapper;
+	readonly serializer: ProjectSerializer;
 
 	constructor(
 		name: string,
@@ -137,7 +90,7 @@ export class Project {
 	) {
 		this.name = name;
 		this.created = false;
-		this.uid = Math.random() * 100000000000000;
+		this.uid = crypto.randomUUID();
 		this.timeline = timeline;
 		this.stage = stage;
 		this.videoName = '';
@@ -182,6 +135,9 @@ export class Project {
 			stretchH: 'last',
 		});
 
+		this.coordinateMapper = new CoordinateMapper(this);
+		this.serializer = new ProjectSerializer(this);
+
 		const project = this;
 
 		this.positioning = {
@@ -196,7 +152,7 @@ export class Project {
 			},
 			set zoom(value: number) {
 				const oldZoom = this._zoom;
-				this._zoom = value.roundTo(5);
+				this._zoom = roundTo(value, 5);
 				this.autoZoom = false;
 				const zoomChange = this._zoom - oldZoom;
 
@@ -216,7 +172,7 @@ export class Project {
 				return this._x;
 			},
 			set x(value: number) {
-				this._x = value.roundTo(5);
+				this._x = roundTo(value, 5);
 
 				project.background.x = this._x;
 				project.updateScale();
@@ -227,7 +183,7 @@ export class Project {
 				return this._y;
 			},
 			set y(value: number) {
-				this._y = value.roundTo(5);
+				this._y = roundTo(value, 5);
 
 				project.background.y = this._y;
 				project.updateScale();
@@ -346,90 +302,32 @@ export class Project {
 		this.timeline.project = this;
 	}
 
+	// ─── Coordinate Mapping (delegates to CoordinateMapper) ───
+
 	toUnscaled(x: number | Coordinate, y: number | null = null): Coordinate {
-		let xNum: number;
-		let yNum: number;
-		if (typeof x === 'object') {
-			xNum = x.x;
-			yNum = y !== null ? y : x.y;
-		} else {
-			xNum = x;
-			yNum = y !== null ? y : 0;
-		}
-
-		const changing = {
-			width: this.timeline.video.videoWidth * (this.backgroundScale * this.positioning.zoom),
-			height: this.timeline.video.videoHeight * (this.backgroundScale * this.positioning.zoom),
-		};
-		const unchanging = {
-			width: this.timeline.video.videoWidth,
-			height: this.timeline.video.videoHeight,
-		};
-		const translation = {
-			x: this.positioning.x,
-			y: this.positioning.y,
-		};
-
-		return {
-			x: (xNum / unchanging.width) * changing.width + translation.x,
-			y: (yNum / unchanging.height) * changing.height + translation.y,
-		};
+		return this.coordinateMapper.toUnscaled(x, y);
 	}
 
 	toScaled(x: number | Coordinate, y: number | null = null): Coordinate {
-		let xNum: number;
-		let yNum: number;
-		if (typeof x === 'object') {
-			xNum = x.x;
-			yNum = y !== null ? y : x.y;
-		} else {
-			xNum = x;
-			yNum = y !== null ? y : 0;
-		}
-
-		const changing = {
-			width: this.timeline.video.videoWidth * (this.backgroundScale * this.positioning.zoom),
-			height: this.timeline.video.videoHeight * (this.backgroundScale * this.positioning.zoom),
-		};
-		const unchanging = {
-			width: this.timeline.video.videoWidth,
-			height: this.timeline.video.videoHeight,
-		};
-		const translation = {
-			x: this.positioning.x,
-			y: this.positioning.y,
-		};
-
-		return {
-			x: ((xNum - translation.x) / changing.width) * unchanging.width,
-			y: ((yNum - translation.y) / changing.height) * unchanging.height,
-		};
+		return this.coordinateMapper.toScaled(x, y);
 	}
 
 	updateScale(): void {
-		if (this.axes !== undefined && this.axes !== null) {
-			const moveTo = this.toUnscaled(this.axes.x, this.axes.y);
-			this.axes.shape.x = moveTo.x;
-			this.axes.shape.y = moveTo.y;
-		}
-		for (let i = 0; i < this.timeline.frames.length; i++) {
-			const frame = this.timeline.frames[i];
-			for (let j = 0; j < frame.points.length; j++) {
-				const point = frame.points[j];
-				const scaled = this.toUnscaled(point.x, point.y);
-				point.shape.x = point.circle.x = scaled.x;
-				point.shape.y = point.circle.y = scaled.y;
-			}
-		}
-		if (this.scale !== undefined && this.scale !== null) {
-			const moveTo = [this.toUnscaled(this.scale.positions[0]), this.toUnscaled(this.scale.positions[1])];
-			this.scale.nodes[0].x = moveTo[0].x;
-			this.scale.nodes[0].y = moveTo[0].y;
-			this.scale.nodes[1].x = moveTo[1].x;
-			this.scale.nodes[1].y = moveTo[1].y;
-			this.scale.update();
-		}
+		this.coordinateMapper.updateScale();
 	}
+
+	// ─── Serialization (delegates to ProjectSerializer) ───
+
+	save(): ProjectSaveFile {
+		return this.serializer.save();
+	}
+
+	load(fileData: LoadFileData): this {
+		this.serializer.load(fileData);
+		return this;
+	}
+
+	// ─── Undo/Redo ───
 
 	undo(): void {
 		this.undoManager.undo();
@@ -462,6 +360,8 @@ export class Project {
 		this.backUpDate = new Date();
 		this.backUpIndex = this.undoManager.getIndex();
 	}
+
+	// ─── Events ───
 
 	on(events: string, callback: ProjectCallback): this {
 		const eventList = events.split(',');
@@ -509,6 +409,8 @@ export class Project {
 		return this;
 	}
 
+	// ─── Point Visibility ───
+
 	updateVisiblePoints(): this {
 		if (this.state.mode !== 'add') {
 			for (let i = 0; i < this.timeline.activeFrames.length; i++) {
@@ -541,6 +443,8 @@ export class Project {
 		return this;
 	}
 
+	// ─── Lifecycle ───
+
 	destroy(): this {
 		for (const uid in this.trackList) {
 			const track = this.trackList[uid];
@@ -552,180 +456,7 @@ export class Project {
 		return this;
 	}
 
-	save(): ProjectSaveFile {
-		const metaInfo: MetaInfo = {
-			date: new Date().toString(),
-			createdWith: 'Created with JSTrack by Luca Demian',
-			appVersion: 0.1,
-			fileVersion: 0.3,
-		};
-
-		const saveData: SaveData = {
-			name: this.name,
-			duration: this.timeline.duration,
-			video: this.timeline.video,
-			fps: this.timeline.fps,
-			currentFrame: this.timeline.currentFrame,
-			uid: this.uid,
-			startFrame: this.timeline.startFrame,
-			endFrame: this.timeline.endFrame,
-			videoName: this.videoName,
-			videoSpeed: this.videoSpeed,
-		};
-
-		if (this.scale !== null && this.scale !== undefined) {
-			saveData.scale = {
-				size: this.scale.size.toString(),
-				color: this.scale.color,
-				nodes: [
-					{ x: this.scale.positions[0].x, y: this.scale.positions[0].y },
-					{ x: this.scale.positions[1].x, y: this.scale.positions[1].y },
-				],
-			};
-		}
-
-		if (this.axes !== null && this.axes !== undefined) {
-			saveData.axes = {
-				position: { x: this.axes.x, y: this.axes.y, rotation: this.axes.theta },
-				color: this.axes.color,
-			};
-		}
-
-		if (this.track !== null && this.track !== undefined) saveData.activeTrack = this.track.uid;
-
-		saveData.tracks = {};
-		for (const uid in this.trackList) {
-			const track = this.trackList[uid];
-			const trackInfo: SaveTrackInfo = {
-				name: track.name,
-				color: track.color,
-				points: {},
-				hidden: track.hidden,
-			};
-
-			for (const number in track.points) {
-				trackInfo.points[number] = {
-					x: track.points[number].x,
-					y: track.points[number].y,
-				};
-			}
-
-			saveData.tracks[uid] = trackInfo;
-		}
-
-		return { meta: metaInfo, project: saveData };
-	}
-
-	load(fileData: LoadFileData): this {
-		let version = 0;
-		const fileInfo = fileData.meta;
-
-		let data: Record<string, unknown>;
-		if (fileInfo !== undefined) {
-			version = fileInfo.fileVersion;
-			if (version > 0) {
-				data = (fileData.project as Record<string, unknown>) || fileData;
-			} else {
-				data = fileData as Record<string, unknown>;
-			}
-		} else {
-			data = fileData as Record<string, unknown>;
-		}
-
-		if (data.fps !== undefined) {
-			this.timeline.updateTiming(this.timeline.video.duration, data.fps as number);
-			if (this.timeline.frames.length === 1) {
-				this.timeline.createFrames();
-			}
-			this._load(data, version);
-		} else {
-			this.timeline.detectFrameRate((fps: number) => {
-				this.timeline.updateTiming(this.timeline.video.duration, fps);
-				if (this.timeline.frames.length === 1) {
-					this.timeline.createFrames();
-				}
-
-				this._load(data, version);
-			});
-		}
-
-		return this;
-	}
-
-	_load(data: Record<string, unknown>, version: number): void {
-		for (const key in data) {
-			const value = data[key];
-			switch (key) {
-				case 'name':
-					this.name = value as string;
-					break;
-				case 'uid':
-					this.uid = value as number;
-					break;
-				case 'videoName':
-					this.videoName = value as string;
-					break;
-				case 'videoSpeed':
-					this.videoSpeed = value as number;
-					break;
-				case 'currentFrame':
-					this.timeline.seek(value as number);
-					break;
-				case 'startFrame':
-					this.timeline.startFrame = value as number;
-					break;
-				case 'endFrame':
-					this.timeline.endFrame = value as number;
-					break;
-				case 'scale': {
-					const scaleData = value as SaveScaleData;
-					this.newScale(
-						scaleData.size,
-						scaleData.nodes[0].x,
-						scaleData.nodes[0].y,
-						scaleData.nodes[1].x,
-						scaleData.nodes[1].y,
-						scaleData.color,
-						true,
-					);
-					break;
-				}
-				case 'axes': {
-					const axesData = value as SaveAxesData;
-					const axes = this.newAxes(axesData.position.x, axesData.position.y, axesData.color, true);
-					if (version > 0) {
-						axes.rotate(axesData.position.rotation);
-					}
-					break;
-				}
-				case 'tracks': {
-					const tracksData = value as Record<string, SaveTrackInfo>;
-					for (const uid in tracksData) {
-						const trackInfo = tracksData[uid];
-						const track = this.newTrack(trackInfo.name, trackInfo.color, false, uid);
-						for (const number in trackInfo.points) {
-							const frame = this.timeline.frames[Number(number)];
-							if (frame !== undefined)
-								track.addPoint(frame, trackInfo.points[number].x, trackInfo.points[number].y);
-						}
-						track.unselectAll();
-						if (version > 0.2) {
-							if (trackInfo.hidden) track.hide();
-						}
-					}
-					break;
-				}
-			}
-			if (data.activeTrack !== undefined && data.activeTrack !== null) {
-				this.switchTrack(data.activeTrack as string);
-			}
-		}
-
-		this.updateVisiblePoints();
-		this.created = true;
-		this.trigger('created');
-		this.undoManager.clear();
-	}
+	// ─── Track Management ───
 
 	deleteTrack(uid: string): void {
 		if (this.trackList[uid] !== undefined) {
@@ -800,6 +531,8 @@ export class Project {
 		return track;
 	}
 
+	// ─── Axes & Scale Management ───
+
 	newAxes(x: number, y: number, color: string, makeDefault = true): Axes {
 		const axes = new Axes(this.stage, x, y, color, this);
 		this.axesList.push(axes);
@@ -841,6 +574,8 @@ export class Project {
 			this.scale = null;
 		}
 	}
+
+	// ─── Track Switching & Data Update ───
 
 	switchTrack(uid: string): this {
 		if (this.trackList[uid] !== undefined) {

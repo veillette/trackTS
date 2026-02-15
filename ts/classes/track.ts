@@ -8,7 +8,6 @@
  * any later version.
  */
 
-import '../functions';
 import type { Axes } from './axes';
 import type { Frame } from './frame';
 import { Point, type PointExportData } from './point';
@@ -99,7 +98,7 @@ export class Track {
 		this.selectedPoint = null;
 		this.emphasizedPoint = null;
 		this.table = new Table(this, { t: 's', x: this.unit, y: this.unit });
-		if (uid === false) this.uid = (Math.round(Math.random() * 100000000) + 1).toString();
+		if (uid === false) this.uid = crypto.randomUUID();
 		else this.uid = uid.toString();
 		this.listElement = {
 			container: document.createElement('li'),
