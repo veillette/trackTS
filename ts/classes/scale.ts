@@ -256,6 +256,16 @@ export class Scale {
 		return this.size.units[0].unit.name;
 	}
 
+	/**
+	 * Parses a user-entered scale string into a math.js unit value.
+	 *
+	 * Supports two formats:
+	 *   - Simple unit: `"5 m"`, `"2.3 ft"` → parsed directly via `math.unit()`
+	 *   - Conversion: `"5 m > cm"` → parsed as `math.unit("5 m").to("cm")`
+	 *
+	 * @param value - The raw string from the scale text input
+	 * @returns The parsed size and display text, or `false` if parsing fails
+	 */
 	processValue(value: string): ScaleProcessedValue | false {
 		const returnData: Partial<ScaleProcessedValue> = {};
 		if (value.length > 0) {
@@ -361,6 +371,16 @@ export class Scale {
 		this.stage.update();
 	}
 
+	/**
+	 * Converts a distance in pixels to real-world units using the scale ratio.
+	 *
+	 * The conversion factor is `this.size / this.length` (real-world size per pixel
+	 * of the scale line). The result is then converted to the requested unit.
+	 *
+	 * @param pixels - Distance in video pixel coordinates
+	 * @param unit - Target unit (defaults to the scale's own unit)
+	 * @returns Object with `number` property containing the converted value
+	 */
 	convert(pixels: number, unit: MathJsUnit = math.unit(this.unit())): { number: number } {
 		const scaled = math.multiply(pixels, math.divide(this.size, this.length) as number);
 		const mathUnit = math.unit(String(scaled)).to(unit.toString());

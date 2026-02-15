@@ -223,6 +223,23 @@ export class Axes {
 		}
 	}
 
+	/**
+	 * Converts a point from video pixel coordinates to the rotated axes coordinate system.
+	 *
+	 * The Y axis is flipped (screen Y is inverted) before applying the rotation.
+	 * For the general case, the method projects the point onto the rotated X and Y axes
+	 * by computing line–line intersections:
+	 *   - interceptX: perpendicular drop from the point onto the rotated X-axis line
+	 *   - interceptY: perpendicular drop from the point onto the rotated Y-axis line
+	 * The signed distances from the origin to these intercepts give the (x, y) result.
+	 *
+	 * Special cases for theta = 0, π/2, π, 3π/2, 2π use direct arithmetic to avoid
+	 * division by zero in tan/cot.
+	 *
+	 * @param x - X in video pixel coords, or a Coordinate object
+	 * @param y - Y in video pixel coords (ignored if x is a Coordinate)
+	 * @returns The point expressed in the rotated axes coordinate system
+	 */
 	convert(x: number | Coordinate, y: number | null = null): Coordinate {
 		let xVal: number;
 		let yVal: number;

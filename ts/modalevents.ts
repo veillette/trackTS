@@ -26,17 +26,24 @@ import { DriveUpload } from './saveDrive';
 
 newProject.on('submit', function (data) {
 	if (!data) return;
+	const videoSpeed = parseFloat(data.videospeed);
+	const frameSkip = parseInt(data.frameskip, 10);
+	const pointsForward = parseInt(data.pointsForward, 10);
+	const pointsBackward = parseInt(data.pointsBackward, 10);
+	if (Number.isNaN(videoSpeed) || Number.isNaN(frameSkip) || Number.isNaN(pointsForward) || Number.isNaN(pointsBackward)) {
+		return;
+	}
 	master.name = data.name;
-	master.videoSpeed = parseFloat(data.videospeed);
-	master.timeline.frameSkip = parseInt(data.frameskip, 10);
+	master.videoSpeed = videoSpeed;
+	master.timeline.frameSkip = frameSkip;
 	master.timeline.updateTiming(master.timeline.video.duration, data.framerate);
 	master.timeline.createFrames();
 	const axesPos = master.toScaled(canvas.width / 2, canvas.height / 2);
 	master.newAxes(axesPos.x, axesPos.y, data.axesColor, true);
 	this.hide().clear();
 	master.viewPoints = {
-		forward: parseInt(data.pointsForward, 10),
-		backward: parseInt(data.pointsBackward, 10),
+		forward: pointsForward,
+		backward: pointsBackward,
 	};
 	master.updateVisiblePoints();
 	master.created = true;
@@ -177,13 +184,19 @@ saveProject
 editProject
 	.on('submit', function (data) {
 		if (!data) return;
+		const frameSkip = parseInt(data.frameskip, 10);
+		const pointsForward = parseInt(data.pointsForward, 10);
+		const pointsBackward = parseInt(data.pointsBackward, 10);
+		if (Number.isNaN(frameSkip) || Number.isNaN(pointsForward) || Number.isNaN(pointsBackward)) {
+			return;
+		}
 		master.name = data.name;
-		master.timeline.frameSkip = parseInt(data.frameskip, 10);
+		master.timeline.frameSkip = frameSkip;
 		master.axes?.updateColor(data.axesColor);
 		this.hide().clear();
 		master.viewPoints = {
-			forward: parseInt(data.pointsForward, 10),
-			backward: parseInt(data.pointsBackward, 10),
+			forward: pointsForward,
+			backward: pointsBackward,
 		};
 		master.updateVisiblePoints();
 	})

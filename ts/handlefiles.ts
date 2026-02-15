@@ -3,14 +3,15 @@
  * Copyright (C) 2018 Luca Demian
  */
 
+import { alertModal, confirmModal } from './classes/modal';
 import { hideLoader, showLoader } from './functions';
 import { CUSTOM_EXTENSION, master, newProject, VIDEO_CONVERTOR } from './globals';
 import { dataLoaded, hideLaunchModal, loadProject, loadVideo } from './load';
 
-export function handleFile(
+export async function handleFile(
 	file: File | (Blob & { name?: string; type?: string }),
 	callback: (() => void) | null = null,
-): void {
+): Promise<void> {
 	const fileType = (file as File).type || '';
 	const fileName = (file as File).name || '';
 
@@ -20,8 +21,10 @@ export function handleFile(
 				let canLoad = false;
 
 				if (fileName !== dataLoaded.name) {
-					if (confirm("This file doesn't match what the original video was named. Continue?")) canLoad = true;
-					else canLoad = false;
+					canLoad = await confirmModal(
+						"This file doesn't match what the original video was named. Continue?",
+						'File Mismatch',
+					);
 				} else canLoad = true;
 
 				if (canLoad) {
@@ -63,15 +66,19 @@ export function handleFile(
 					event_label: fileName,
 				});
 			} else {
-				alert(`This filetype is not supported. It must be .mp4 or .${CUSTOM_EXTENSION}`);
+				await alertModal(
+					`This filetype is not supported. It must be .mp4 or .${CUSTOM_EXTENSION}`,
+					'Unsupported File',
+				);
 				hideLoader();
 			}
 			break;
 		default:
 			if (fileType.split('/')[0] === 'video') {
 				if (
-					confirm(
+					await confirmModal(
 						"The only supported video type is mp4. Would you like to try the experimental video converter? (sometimes doesn't work, especially for longer videos)",
+						'Convert Video',
 					)
 				) {
 					gtag('event', 'Agreed to Try Convertor', {
@@ -124,7 +131,12 @@ export function handleFile(
 						};
 					};
 					filereader.readAsArrayBuffer(file as File);
-				} else if (confirm('Would you like to open a free online video converter in another tab?')) {
+				} else if (
+					await confirmModal(
+						'Would you like to open a free online video converter in another tab?',
+						'Online Converter',
+					)
+				) {
 					hideLoader();
 					window.open(VIDEO_CONVERTOR, '_blank');
 				} else {
@@ -132,7 +144,10 @@ export function handleFile(
 				}
 			} else {
 				hideLoader();
-				alert(`This filetype is not supported. It must be .mp4 or .${CUSTOM_EXTENSION}`);
+				await alertModal(
+					`This filetype is not supported. It must be .mp4 or .${CUSTOM_EXTENSION}`,
+					'Unsupported File',
+				);
 			}
 			break;
 	}
