@@ -11,6 +11,7 @@
 import { roundTo } from '../functions';
 import { Axes, type Coordinate } from './axes';
 import { CoordinateMapper } from './coordinate-mapper';
+import { EventEmitter } from './event-emitter';
 import { type LoadFileData, type ProjectSaveFile, ProjectSerializer } from './project-serializer';
 import { Scale } from './scale';
 import type { TableRowData } from './table';
@@ -19,7 +20,6 @@ import { Track } from './track';
 
 export type { ProjectSaveFile } from './project-serializer';
 
-type ProjectCallback = (this: Project, args: unknown[]) => void;
 type ProjectModeCallback = (this: Project, mode: string, lastMode: string) => void;
 type PositioningCallback = (this: Project, args: { event: string; delta?: number }) => void;
 
@@ -35,6 +35,7 @@ interface ProjectPositioning {
 	y: number;
 	trigger(event: string, argArray?: { event?: string; delta?: number }): void;
 	on(event: string, callback: PositioningCallback): ProjectPositioning;
+	off(event: string, callback: PositioningCallback): ProjectPositioning;
 }
 
 interface ProjectState {
@@ -46,10 +47,11 @@ interface ProjectState {
 	triggerChange(): void;
 	reset(): void;
 	modeChange(val: ProjectModeCallback): void;
+	offModeChange(val: ProjectModeCallback): void;
 	default(): void;
 }
 
-export class Project {
+export class Project extends EventEmitter {
 	name: string;
 	created: boolean;
 	uid: string;
@@ -69,7 +71,6 @@ export class Project {
 	trackList: Record<string, Track>;
 	deletedTracks: Record<string, Track>;
 	axesList: Axes[];
-	callbacks: Record<string, ProjectCallback[]>;
 	undoManager: UndoManager;
 	saveIndex: number;
 	backUpIndex: number;
@@ -78,6 +79,7 @@ export class Project {
 	handsOnTable: Handsontable;
 	positioning: ProjectPositioning;
 	state: ProjectState;
+	onEditTrack: ((data: Record<string, string>) => void) | null;
 	readonly coordinateMapper: CoordinateMapper;
 	readonly serializer: ProjectSerializer;
 
@@ -88,6 +90,7 @@ export class Project {
 		stage: createjs.Stage,
 		background: createjs.Bitmap,
 	) {
+		super();
 		this.name = name;
 		this.created = false;
 		this.uid = crypto.randomUUID();
@@ -111,7 +114,7 @@ export class Project {
 		this.trackList = {};
 		this.deletedTracks = {};
 		this.axesList = [];
-		this.callbacks = {};
+		this.onEditTrack = null;
 		this.undoManager = new UndoManager();
 		this.saveIndex = this.backUpIndex = this.undoManager.getIndex();
 		this.viewPoints = {
@@ -212,6 +215,18 @@ export class Project {
 				}
 				return this;
 			},
+			off(event: string, callback: PositioningCallback) {
+				const events = event.split(',');
+				for (let i = 0; i < events.length; i++) {
+					const tempEvent = events[i].trim();
+					const cbs = this._callbacks[tempEvent];
+					if (cbs) {
+						const idx = cbs.indexOf(callback);
+						if (idx !== -1) cbs.splice(idx, 1);
+					}
+				}
+				return this;
+			},
 		};
 
 		this.state = {
@@ -242,6 +257,10 @@ export class Project {
 			},
 			modeChange(val: ProjectModeCallback) {
 				this.modeCallbacks.push(val);
+			},
+			offModeChange(val: ProjectModeCallback) {
+				const idx = this.modeCallbacks.indexOf(val);
+				if (idx !== -1) this.modeCallbacks.splice(idx, 1);
 			},
 			default() {
 				this._mode = 'default';
@@ -362,31 +381,6 @@ export class Project {
 	}
 
 	// ─── Events ───
-
-	on(events: string, callback: ProjectCallback): this {
-		const eventList = events.split(',');
-		for (let i = 0; i < eventList.length; i++) {
-			const event = eventList[i].trim();
-			if (this.callbacks[event] === undefined) {
-				this.callbacks[event] = [];
-			}
-			this.callbacks[event].push(callback);
-		}
-		return this;
-	}
-
-	trigger(events: string, argArray: unknown[] = []): this {
-		const eventList = events.split(',');
-		for (let i = 0; i < eventList.length; i++) {
-			const event = eventList[i].trim();
-			if (this.callbacks[event] !== undefined) {
-				for (let j = 0; j < this.callbacks[event].length; j++) {
-					this.callbacks[event][j].call(this, argArray);
-				}
-			}
-		}
-		return this;
-	}
 
 	changed(): this {
 		this.saved = false;

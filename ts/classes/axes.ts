@@ -224,15 +224,19 @@ export class Axes {
 	}
 
 	convert(x: number | Coordinate, y: number | null = null): Coordinate {
-		if (typeof x === 'object' && y === null) {
-			y = x.y;
-			x = x.x;
-		}
-		if (typeof x !== 'number' || typeof y !== 'number') {
+		let xVal: number;
+		let yVal: number;
+		if (typeof x === 'object') {
+			xVal = x.x;
+			yVal = y ?? x.y;
+		} else if (typeof y === 'number') {
+			xVal = x;
+			yVal = y;
+		} else {
 			return { x: 0, y: 0 };
 		}
 
-		const coords = { x: x, y: -y };
+		const coords = { x: xVal, y: -yVal };
 		const origin = { x: this.x, y: -this.y };
 
 		const tan = Math.tan(this.theta);

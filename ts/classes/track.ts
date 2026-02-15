@@ -30,6 +30,7 @@ interface TrackState {
 	triggerChange(): void;
 	resetMode(): void;
 	modeChange(val: TrackModeCallback): void;
+	offModeChange(val: TrackModeCallback): void;
 	selectionChange(val: TrackSelectionCallback): void;
 }
 
@@ -156,6 +157,10 @@ export class Track {
 			modeChange(val: TrackModeCallback) {
 				this.modeCallbacks.push(val);
 			},
+			offModeChange(val: TrackModeCallback) {
+				const idx = this.modeCallbacks.indexOf(val);
+				if (idx !== -1) this.modeCallbacks.splice(idx, 1);
+			},
 			set selected(val: boolean) {
 				this._selected = val;
 				for (let i = 0; i < this.selectionCallbacks.length; i++) {
@@ -197,18 +202,12 @@ export class Track {
 			tempTrack.project.switchTrack(tempTrack.uid);
 		});
 		this.listElement.container.addEventListener('dblclick', () => {
-			// editTrack is a global modal - accessed via the app module
-			const editTrackModal = (
-				window as unknown as Record<string, { push: (data: Record<string, string>) => { show: () => void } }>
-			).editTrack;
-			if (editTrackModal) {
-				editTrackModal
-					.push({
-						name: tempTrack.name,
-						color: tempTrack.color,
-						uid: tempTrack.uid,
-					})
-					.show();
+			if (tempTrack.project.onEditTrack) {
+				tempTrack.project.onEditTrack({
+					name: tempTrack.name,
+					color: tempTrack.color,
+					uid: tempTrack.uid,
+				});
 			}
 		});
 

@@ -208,5 +208,5 @@ export const editTrack = new Modal({
 	buttons: { cancel: { label: 'Cancel' }, submit: { label: 'Save' } },
 });
 
-// Expose editTrack globally so Track class dblclick handler can access it
-(window as unknown as Record<string, unknown>).editTrack = editTrack;
+// Wire up Track dblclick → editTrack modal (avoids circular imports)
+master.onEditTrack = (data) => editTrack.push(data).show();

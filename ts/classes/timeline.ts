@@ -9,12 +9,11 @@
  */
 
 import { roundTo } from '../functions';
+import { EventEmitter } from './event-emitter';
 import { Frame } from './frame';
 import type { Project } from './project';
 
-type TimelineCallback = (this: Timeline, args: unknown[]) => void;
-
-export class Timeline {
+export class Timeline extends EventEmitter {
 	duration: number;
 	video: HTMLVideoElement;
 	width: number;
@@ -32,13 +31,13 @@ export class Timeline {
 	seekSaved: boolean;
 	startFrame: number;
 	endFrame: number;
-	callbacks: Record<string, TimelineCallback[]>;
 	frames: Frame[];
 	activeFrames: Frame[];
 	playInterval: ReturnType<typeof setInterval> | undefined;
 	project!: Project;
 
 	constructor(width: number, height: number, video: HTMLVideoElement, fps: number) {
+		super();
 		this.duration = roundTo(video.duration, 3);
 		this.video = video;
 		this.width = width;
@@ -55,7 +54,6 @@ export class Timeline {
 		this.seekSaved = false;
 		this.startFrame = 0;
 		this.endFrame = 1;
-		this.callbacks = {};
 		this.frames = [new Frame(this, 0, 0)];
 		this.activeFrames = [];
 	}
@@ -65,29 +63,6 @@ export class Timeline {
 		for (let time = this.frameTime; time <= this.video.duration; time = roundTo(time + this.frameTime, 3)) {
 			this.frames[counter] = new Frame(this, time, counter);
 			counter++;
-		}
-	}
-
-	trigger(events: string, argArray: unknown[] = []): void {
-		const eventList = events.split(',');
-		for (let i = 0; i < eventList.length; i++) {
-			const event = eventList[i].trim();
-			if (this.callbacks[event] !== undefined) {
-				for (let j = 0; j < this.callbacks[event].length; j++) {
-					this.callbacks[event][j].call(this, argArray);
-				}
-			}
-		}
-	}
-
-	on(events: string, callback: TimelineCallback): void {
-		const eventList = events.split(',');
-		for (let i = 0; i < eventList.length; i++) {
-			const event = eventList[i].trim();
-			if (this.callbacks[event] === undefined) {
-				this.callbacks[event] = [];
-			}
-			this.callbacks[event].push(callback);
 		}
 	}
 

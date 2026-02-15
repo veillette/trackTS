@@ -33,6 +33,8 @@ export class Point {
 	pointRect: createjs.GraphicsCommand;
 	circle: createjs.Shape;
 	deleted: boolean;
+	private _trackModeCallback: (this: Track, mode: string, lastMode: string) => void;
+	private _projectModeCallback: (mode: string, lastMode: string) => void;
 
 	constructor(track: Track, frame: Frame, x: number, y: number) {
 		this.track = track;
@@ -71,7 +73,7 @@ export class Point {
 		}
 
 		const tempShape = this;
-		this.track.state.modeChange(function (this: Track, mode: string) {
+		this._trackModeCallback = function (this: Track, mode: string) {
 			if (mode === 'add' || mode === 'hidden') {
 				tempShape.track.stage.removeChild(tempShape.shape);
 				tempShape.track.stage.removeChild(tempShape.circle);
@@ -80,7 +82,8 @@ export class Point {
 					tempShape.track.stage.addChild(tempShape.shape);
 				}
 			}
-		});
+		};
+		this.track.state.modeChange(this._trackModeCallback);
 		let moving = false;
 		this.shape.on('pressmove', (e: createjs.MouseEvent) => {
 			if (tempShape.track.project.state.mode !== 'seek') {
@@ -137,13 +140,14 @@ export class Point {
 				tempShape.track.project.changed();
 			}
 		});
-		this.track.project.state.modeChange((mode: string) => {
+		this._projectModeCallback = (mode: string) => {
 			if (mode === 'seek') {
 				tempShape.shape.cursor = 'crosshair';
 			} else {
 				tempShape.shape.cursor = 'pointer';
 			}
-		});
+		};
+		this.track.project.state.modeChange(this._projectModeCallback);
 	}
 
 	hide(): this {
@@ -257,6 +261,8 @@ export class Point {
 		this.track.stage.removeChild(this.circle);
 		this.unselect().unemphasize();
 		this.deleted = true;
+		this.track.state.offModeChange(this._trackModeCallback);
+		this.track.project.state.offModeChange(this._projectModeCallback);
 		this.track.deletedPoints[this.frame.number] = this;
 		delete this.track.points[this.frame.number];
 		this.track.project.update();
@@ -267,6 +273,8 @@ export class Point {
 			this.track.stage.addChild(this.shape);
 		}
 		this.deleted = false;
+		this.track.state.modeChange(this._trackModeCallback);
+		this.track.project.state.modeChange(this._projectModeCallback);
 		this.track.points[this.frame.number] = this;
 		delete this.track.deletedPoints[this.frame.number];
 		this.track.project.update();
