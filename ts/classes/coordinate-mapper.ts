@@ -13,6 +13,17 @@ export class CoordinateMapper {
 		this.project = project;
 	}
 
+	/**
+	 * Converts video pixel coordinates to canvas display coordinates.
+	 *
+	 * Applies the current zoom level, background scale, and pan translation
+	 * to map a position in the original video frame to where it appears on
+	 * the canvas. Formula: `canvasPos = (videoPos / videoSize) * displaySize + panOffset`
+	 *
+	 * @param x - X coordinate in video pixels, or a Coordinate object
+	 * @param y - Y coordinate in video pixels (ignored if x is a Coordinate)
+	 * @returns Position in canvas display coordinates
+	 */
 	toUnscaled(x: number | Coordinate, y: number | null = null): Coordinate {
 		let xNum: number;
 		let yNum: number;
@@ -46,6 +57,17 @@ export class CoordinateMapper {
 		};
 	}
 
+	/**
+	 * Converts canvas display coordinates back to video pixel coordinates.
+	 *
+	 * Reverses the zoom, scale, and pan transformation to recover the original
+	 * video-space position from a point on the canvas.
+	 * Formula: `videoPos = ((canvasPos - panOffset) / displaySize) * videoSize`
+	 *
+	 * @param x - X coordinate on the canvas, or a Coordinate object
+	 * @param y - Y coordinate on the canvas (ignored if x is a Coordinate)
+	 * @returns Position in original video pixel coordinates
+	 */
 	toScaled(x: number | Coordinate, y: number | null = null): Coordinate {
 		let xNum: number;
 		let yNum: number;
@@ -79,8 +101,12 @@ export class CoordinateMapper {
 		};
 	}
 
+	/**
+	 * Recomputes display positions of all visual overlays (axes, points, scale)
+	 * after the viewport zoom or pan has changed.
+	 */
 	updateScale(): void {
-		if (this.project.axes !== undefined && this.project.axes !== null) {
+		if (this.project.axes != null) {
 			const moveTo = this.toUnscaled(this.project.axes.x, this.project.axes.y);
 			this.project.axes.shape.x = moveTo.x;
 			this.project.axes.shape.y = moveTo.y;
@@ -94,7 +120,7 @@ export class CoordinateMapper {
 				point.shape.y = point.circle.y = scaled.y;
 			}
 		}
-		if (this.project.scale !== undefined && this.project.scale !== null) {
+		if (this.project.scale != null) {
 			const moveTo = [
 				this.toUnscaled(this.project.scale.positions[0]),
 				this.toUnscaled(this.project.scale.positions[1]),

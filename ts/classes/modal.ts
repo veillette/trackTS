@@ -36,6 +36,61 @@ import { type EventCallback, EventEmitter } from './event-emitter';
 
 export type ModalExportData = Record<string, string> | false;
 
+let confirmCounter = 0;
+
+/**
+ * Shows a non-blocking confirmation dialog using the Modal system.
+ * Replaces native `confirm()` which blocks the main thread.
+ */
+export function confirmModal(message: string, title = 'Confirm'): Promise<boolean> {
+	return new Promise((resolve) => {
+		const id = `confirm-modal-${++confirmCounter}`;
+		const modal = new Modal({
+			name: title,
+			id,
+			fields: {},
+			buttons: { cancel: { label: 'Cancel' }, confirm: { label: 'OK' } },
+			text: [message],
+		});
+		const cleanup = () => {
+			modal.hide();
+			modal.element?.remove();
+		};
+		modal.on('confirm', () => {
+			cleanup();
+			resolve(true);
+		});
+		modal.on('cancel', () => {
+			cleanup();
+			resolve(false);
+		});
+		modal.show();
+	});
+}
+
+/**
+ * Shows a non-blocking alert dialog using the Modal system.
+ * Replaces native `alert()` which blocks the main thread.
+ */
+export function alertModal(message: string, title = 'Alert'): Promise<void> {
+	return new Promise((resolve) => {
+		const id = `alert-modal-${++confirmCounter}`;
+		const modal = new Modal({
+			name: title,
+			id,
+			fields: {},
+			buttons: { ok: { label: 'OK' } },
+			text: [message],
+		});
+		modal.on('ok', () => {
+			modal.hide();
+			modal.element?.remove();
+			resolve();
+		});
+		modal.show();
+	});
+}
+
 export class Modal extends EventEmitter {
 	name: string;
 	id: string;
@@ -77,7 +132,6 @@ export class Modal extends EventEmitter {
 			'#FF0099',
 			'#CC00FF',
 			'#9D00FF',
-			'#CC00FF',
 			'#6E0DD0',
 			'#9900FF',
 		];
@@ -249,6 +303,27 @@ export class Modal extends EventEmitter {
 				const el = document.getElementById(fieldId) as HTMLInputElement | null;
 				if (el) el.value = String(this.fields[field].initVal);
 			}
+		}
+		return this;
+	}
+
+	/** Updates the text content of the modal (creating the container if needed). */
+	setText(lines: string[]): this {
+		if (!this.textContainer) {
+			this.textContainer = document.createElement('div');
+			// Insert before the button container
+			const buttons = this.element.querySelector('.form-buttons');
+			if (buttons) {
+				this.element.insertBefore(this.textContainer, buttons);
+			} else {
+				this.element.appendChild(this.textContainer);
+			}
+		}
+		this.textContainer.innerHTML = '';
+		for (const line of lines) {
+			const paragraph = document.createElement('p');
+			paragraph.innerHTML = line;
+			this.textContainer.appendChild(paragraph);
 		}
 		return this;
 	}

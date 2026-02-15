@@ -3,6 +3,8 @@
  * Copyright (C) 2018 Luca Demian
  */
 
+import { CANVAS_BOTTOM_OFFSET_PX, SIDEBAR_BREAKPOINT_PX } from './constants';
+import { hideLoader } from './functions';
 import {
 	background,
 	background2,
@@ -19,7 +21,7 @@ import {
 import { frameArrows, scrubber, scrubberCanv, scrubberLine, updateScrubber } from './scrubber';
 
 export function drawGraphics(_initialDraw = false): void {
-	if (window.innerWidth < 1000) {
+	if (window.innerWidth < SIDEBAR_BREAKPOINT_PX) {
 		if (!sidebar.classList.contains('changed')) {
 			sidebar.classList.remove('normal');
 			sidebar.classList.add('hidden');
@@ -42,7 +44,7 @@ export function drawGraphics(_initialDraw = false): void {
 	}
 
 	const width = window.innerWidth - sidebar.offsetWidth;
-	const height = window.innerHeight - 50;
+	const height = window.innerHeight - CANVAS_BOTTOM_OFFSET_PX;
 
 	const sidebarVis = document.getElementById('sidebar-visibility');
 	if (sidebarVis) sidebarVis.style.right = `${sidebar.offsetWidth}px`;
@@ -138,6 +140,15 @@ video.addEventListener('playing', () => {
 	video.style.display = 'none';
 });
 
+video.addEventListener('error', () => {
+	const error = video.error;
+	const message = error ? `Video failed to load: ${error.message}` : 'Video failed to load.';
+	console.error(message);
+	const dropText = document.getElementById('file-drop-area')?.querySelector('.text');
+	if (dropText) dropText.textContent = message;
+	hideLoader();
+});
+
 stage.on('stagemousemove', (e: createjs.MouseEvent) => {
 	const coords = e.target.stage.globalToLocal(e.stageX, e.stageY);
 
@@ -149,7 +160,7 @@ stage.on('stagemousemove', (e: createjs.MouseEvent) => {
 });
 
 stage.on('click', (e: createjs.MouseEvent) => {
-	if (master.track !== null && master.track !== undefined) {
+	if (master.track != null) {
 		if (master.track.state.mode === 'add') {
 			const frame = master.timeline.current();
 			if (frame === false) return;

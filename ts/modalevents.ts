@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Luca Demian
  */
 
+import { GAPI_POLL_INTERVAL_MS, GAPI_TIMEOUT_MS, SCALE_EDIT_FOCUS_DELAY_MS } from './constants';
 import { hideLoader, showLoader } from './functions';
 import {
 	CUSTOM_EXTENSION,
@@ -21,21 +22,34 @@ import {
 	saveProject,
 	stage,
 } from './globals';
+import { fetchBinaryContent } from './load';
 import { DriveUpload } from './saveDrive';
 
 newProject.on('submit', function (data) {
 	if (!data) return;
+	const videoSpeed = parseFloat(data.videospeed);
+	const frameSkip = parseInt(data.frameskip, 10);
+	const pointsForward = parseInt(data.pointsForward, 10);
+	const pointsBackward = parseInt(data.pointsBackward, 10);
+	if (
+		Number.isNaN(videoSpeed) ||
+		Number.isNaN(frameSkip) ||
+		Number.isNaN(pointsForward) ||
+		Number.isNaN(pointsBackward)
+	) {
+		return;
+	}
 	master.name = data.name;
-	master.videoSpeed = parseFloat(data.videospeed);
-	master.timeline.frameSkip = parseInt(data.frameskip, 10);
+	master.videoSpeed = videoSpeed;
+	master.timeline.frameSkip = frameSkip;
 	master.timeline.updateTiming(master.timeline.video.duration, data.framerate);
 	master.timeline.createFrames();
 	const axesPos = master.toScaled(canvas.width / 2, canvas.height / 2);
 	master.newAxes(axesPos.x, axesPos.y, data.axesColor, true);
 	this.hide().clear();
 	master.viewPoints = {
-		forward: parseInt(data.pointsForward, 10),
-		backward: parseInt(data.pointsBackward, 10),
+		forward: pointsForward,
+		backward: pointsBackward,
 	};
 	master.updateVisiblePoints();
 	master.created = true;
@@ -48,45 +62,44 @@ newProject.on('submit', function (data) {
 });
 
 saveProject
-	.on('saveFile', function (modalData) {
+	.on('saveFile', async function (modalData) {
 		if (!modalData) return;
 		if (!master.videoFile) return;
 		showLoader();
-		const fileUrl = URL.createObjectURL(master.videoFile);
-		JSZipUtils.getBinaryContent(fileUrl, (err: Error | null, data: ArrayBuffer) => {
-			if (err) {
-				console.log(err);
-			}
+		this.hide().clear();
+
+		try {
+			const fileUrl = URL.createObjectURL(master.videoFile);
+			const data = await fetchBinaryContent(fileUrl);
 
 			let filename = modalData.filename || '';
-
 			if (filename.length === 0) {
 				filename = `${master.name.toLowerCase().replace(' ', '_')}-${Date.now()}.${CUSTOM_EXTENSION}`;
 			} else if (filename.split('.').pop() !== CUSTOM_EXTENSION) filename += `.${CUSTOM_EXTENSION}`;
 
 			const projectInfo = JSON.stringify(master.save());
 			const zip = new JSZip();
-
 			zip.file('video.mp4', data, { binary: true }).file('meta.json', projectInfo);
 
-			zip.generateAsync({ type: 'blob', mimeType: 'application/octet-stream' }).then(
-				(blob: Blob) => {
-					saveAs(blob, filename);
-					master.saved = true;
-					hideLoader();
-				},
-				(err: Error) => {
-					console.log(err);
-				},
-			);
-		});
-
-		this.hide().clear();
+			const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/octet-stream' });
+			saveAs(blob, filename);
+			master.saved = true;
+		} catch (err) {
+			console.error(err);
+		} finally {
+			hideLoader();
+		}
 	})
 	.on('create', function (this: typeof saveProject) {
 		const button = document.getElementById(`${this.id}_button-saveDrive`) as HTMLButtonElement | null;
 		if (button) button.disabled = true;
+		const gapiPollStart = Date.now();
 		const checkLoaded = setInterval(() => {
+			if (Date.now() - gapiPollStart > GAPI_TIMEOUT_MS) {
+				clearInterval(checkLoaded);
+				console.error('Google API failed to load within timeout');
+				return;
+			}
 			try {
 				if (typeof gapi !== 'undefined') {
 					if (gapi.client !== undefined) {
@@ -100,55 +113,36 @@ saveProject
 								clientId: GOOGLE_CLIENT_ID,
 								buttonEl: saveDriveBtn,
 								logoutEl: logoutEl,
-								getFile: (callback) => {
+								getFile: async (callback) => {
 									if (!master.videoFile) return;
 									showLoader();
-									const fileUrl = URL.createObjectURL(master.videoFile);
-									JSZipUtils.getBinaryContent(fileUrl, (err: Error | null, data: ArrayBuffer) => {
-										if (err) {
-											console.log(err);
-										}
+									try {
+										const fileUrl = URL.createObjectURL(master.videoFile);
+										const data = await fetchBinaryContent(fileUrl);
 
 										const exported = this.export();
 										let filename = exported?.filename || '';
 										if (filename.length === 0) {
-											filename =
-												master.name.toLowerCase().replace(' ', '_') +
-												'-' +
-												Date.now() +
-												'.' +
-												CUSTOM_EXTENSION;
+											filename = `${master.name.toLowerCase().replace(' ', '_')}-${Date.now()}.${CUSTOM_EXTENSION}`;
 										} else if (filename.split('.').pop() !== CUSTOM_EXTENSION)
 											filename += `.${CUSTOM_EXTENSION}`;
 
 										const projectInfo = JSON.stringify(master.save());
 										const zip = new JSZip();
-
 										zip.file('video.mp4', data, { binary: true }).file('meta.json', projectInfo);
 
-										zip.generateAsync({
+										const zipFile = await zip.generateAsync({
 											type: 'blob',
 											mimeType: 'application/octet-stream',
-										}).then(
-											(zipFile: Blob) => {
-												const reader = new FileReader();
-												reader.onload = () => {
-													callback(
-														reader.result as unknown as ArrayBuffer,
-														filename,
-														(_success: boolean) => {
-															hideLoader();
-															this.hide();
-														},
-													);
-												};
-												reader.readAsArrayBuffer(zipFile);
-											},
-											(err: Error) => {
-												console.log(err);
-											},
-										);
-									});
+										});
+										const arrayBuffer = await zipFile.arrayBuffer();
+										callback(arrayBuffer, filename, (_success: boolean) => {
+											hideLoader();
+											this.hide();
+										});
+									} catch (err) {
+										console.error(err);
+									}
 								},
 							});
 						}
@@ -156,10 +150,10 @@ saveProject
 					}
 				}
 			} catch {
-				console.log('Google could not be loaded.');
+				console.error('Google API could not be loaded.');
 				clearInterval(checkLoaded);
 			}
-		}, 400);
+		}, GAPI_POLL_INTERVAL_MS);
 	})
 	.on('cancel', function () {
 		this.hide().clear();
@@ -168,13 +162,19 @@ saveProject
 editProject
 	.on('submit', function (data) {
 		if (!data) return;
+		const frameSkip = parseInt(data.frameskip, 10);
+		const pointsForward = parseInt(data.pointsForward, 10);
+		const pointsBackward = parseInt(data.pointsBackward, 10);
+		if (Number.isNaN(frameSkip) || Number.isNaN(pointsForward) || Number.isNaN(pointsBackward)) {
+			return;
+		}
 		master.name = data.name;
-		master.timeline.frameSkip = parseInt(data.frameskip, 10);
+		master.timeline.frameSkip = frameSkip;
 		master.axes?.updateColor(data.axesColor);
 		this.hide().clear();
 		master.viewPoints = {
-			forward: parseInt(data.pointsForward, 10),
-			backward: parseInt(data.pointsBackward, 10),
+			forward: pointsForward,
+			backward: pointsBackward,
 		};
 		master.updateVisiblePoints();
 	})
@@ -249,7 +249,7 @@ newScale
 					scale.textElement.dispatchEvent(new Event('startEditing'));
 					scale.textElement.value = '';
 					scale.textElement.focus();
-				}, 200);
+				}, SCALE_EDIT_FOCUS_DELAY_MS);
 				stage.cursor = 'default';
 				master.state.default();
 				scaleClickCounter++;

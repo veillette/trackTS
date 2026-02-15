@@ -8,6 +8,7 @@
  * any later version.
  */
 
+import { FRAMERATE_DETECTION_STEP } from '../constants';
 import { roundTo } from '../functions';
 import { EventEmitter } from './event-emitter';
 import { Frame } from './frame';
@@ -67,7 +68,7 @@ export class Timeline extends EventEmitter {
 	}
 
 	detectFrameRate(callback: ((fps: number) => void) | null = null): void {
-		const frameTime = 1 / 240;
+		const frameTime = FRAMERATE_DETECTION_STEP;
 		let frame: string | null = null;
 		const tempVideo = document.createElement('video');
 		let firstLoad = true;
@@ -85,10 +86,9 @@ export class Timeline extends EventEmitter {
 				let tempTime = 0;
 				tempVideo.currentTime = tempTime;
 				let startFrame = newCanv.toDataURL();
-				console.log('Detecting Framerate...');
 				let matchCount = 0;
 				let startFrameTime = 0;
-				tempVideo.addEventListener('timeupdate', () => {
+				const onTimeUpdate = () => {
 					newCtx.drawImage(tempVideo, 0, 0, newCanv.width, newCanv.height);
 					if (tempTime === 0) startFrame = newCanv.toDataURL();
 
@@ -102,19 +102,20 @@ export class Timeline extends EventEmitter {
 						tempVideo.currentTime = tempTime;
 					} else if (frame !== startFrame && matchCount === 1) {
 						matchCount++;
+						tempVideo.removeEventListener('timeupdate', onTimeUpdate);
 						let framerate = roundTo(
 							tempVideo.duration / (tempTime - startFrameTime) / tempVideo.duration,
 							2,
 						);
 
 						if (platform.name === 'Firefox' && framerate === 34.29) framerate = 30;
-						console.log(`${framerate} FPS`);
 						if (callback !== null) callback(framerate);
 					} else {
 						tempTime += frameTime;
 						tempVideo.currentTime = tempTime;
 					}
-				});
+				};
+				tempVideo.addEventListener('timeupdate', onTimeUpdate);
 			}
 		};
 		tempVideo.src = this.video.src;
@@ -186,7 +187,7 @@ export class Timeline extends EventEmitter {
 					counter = startingFrame;
 				}
 				this.project.updateVisiblePoints();
-				if (this.project.track !== undefined && this.project.track !== null) {
+				if (this.project.track != null) {
 					if (this.project.track.points[this.currentFrame] !== undefined) {
 						this.project.track.unemphasizeAll();
 						this.project.track.points[this.currentFrame].emphasize();
