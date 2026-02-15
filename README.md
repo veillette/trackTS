@@ -1,8 +1,6 @@
-# jsTrack
+# trackTS
 
 A web-based version of the [Tracker](https://physlets.org/tracker/) physics video analysis software. Extract position data from objects in a video for motion tracking and analysis.
-
-### [Live Version](https://jst.lucademian.com/)
 
 ## Features
 
@@ -24,8 +22,8 @@ A web-based version of the [Tracker](https://physlets.org/tracker/) physics vide
 ### Install & Build
 
 ```bash
-git clone https://github.com/veillette/jsTrack.git
-cd jsTrack
+git clone https://github.com/veillette/trackTS.git
+cd trackTS
 npm install
 npm run build
 ```
@@ -38,19 +36,11 @@ Then open `index.html` in your browser. No server is required.
 npm run dev
 ```
 
-This runs Webpack in watch mode — edit TypeScript files in `ts/` and the bundle rebuilds automatically.
+This runs Vite in watch mode — edit TypeScript files in `ts/` and the bundle rebuilds automatically.
 
 ### Google Drive Integration
 
 To use Drive features, serve the project over HTTP (e.g., `npx http-server`) and access via `http://localhost`. Set up API keys by following the [Google Drive API quickstart](https://developers.google.com/drive/api/v3/quickstart/js), then update the keys in `ts/drive.ts` and `index.html`.
-
-## Tech Stack
-
-- **TypeScript** (strict mode) — source in `ts/`
-- **Webpack** — bundles to `dist/bundle.js`
-- **CreateJS / EaselJS** — canvas rendering
-- **Handsontable** — data table widget
-- **math.js** — unit conversion and calculations
 
 ## Project Structure
 
