@@ -3,6 +3,7 @@
  * Copyright (C) 2018 Luca Demian
  */
 
+import type { Modal, ModalExportData } from './classes/modal';
 import { GAPI_POLL_INTERVAL_MS, GAPI_TIMEOUT_MS, SCALE_EDIT_FOCUS_DELAY_MS } from './constants';
 import { hideLoader, showLoader } from './functions';
 import {
@@ -25,7 +26,7 @@ import {
 import { fetchBinaryContent } from './load';
 import { DriveUpload } from './saveDrive';
 
-newProject.on('submit', function (data) {
+newProject.on('submit', function (this: Modal, data: ModalExportData) {
 	if (!data) return;
 	const videoSpeed = parseFloat(data.videospeed);
 	const frameSkip = parseInt(data.frameskip, 10);
@@ -62,7 +63,7 @@ newProject.on('submit', function (data) {
 });
 
 saveProject
-	.on('saveFile', async function (modalData) {
+	.on('saveFile', async function (this: Modal, modalData: ModalExportData) {
 		if (!modalData) return;
 		if (!master.videoFile) return;
 		showLoader();
@@ -121,7 +122,7 @@ saveProject
 										const data = await fetchBinaryContent(fileUrl);
 
 										const exported = this.export();
-										let filename = exported?.filename || '';
+										let filename = (exported && exported.filename) || '';
 										if (filename.length === 0) {
 											filename = `${master.name.toLowerCase().replace(' ', '_')}-${Date.now()}.${CUSTOM_EXTENSION}`;
 										} else if (filename.split('.').pop() !== CUSTOM_EXTENSION)
@@ -155,12 +156,12 @@ saveProject
 			}
 		}, GAPI_POLL_INTERVAL_MS);
 	})
-	.on('cancel', function () {
+	.on('cancel', function (this: Modal) {
 		this.hide().clear();
 	});
 
 editProject
-	.on('submit', function (data) {
+	.on('submit', function (this: Modal, data: ModalExportData) {
 		if (!data) return;
 		const frameSkip = parseInt(data.frameskip, 10);
 		const pointsForward = parseInt(data.pointsForward, 10);
@@ -178,12 +179,12 @@ editProject
 		};
 		master.updateVisiblePoints();
 	})
-	.on('cancel', function () {
+	.on('cancel', function (this: Modal) {
 		this.hide().clear();
 	});
 
 exportData
-	.on('submit', function (data) {
+	.on('submit', function (this: Modal, data: ModalExportData) {
 		if (!data) return;
 		const workbook = XLSX.utils.book_new();
 
@@ -203,15 +204,15 @@ exportData
 
 		this.hide().clear();
 	})
-	.on('cancel', function () {
+	.on('cancel', function (this: Modal) {
 		this.hide().clear();
 	});
 
 editScale
-	.on('cancel', function () {
+	.on('cancel', function (this: Modal) {
 		this.hide().clear();
 	})
-	.on('submit', function (data) {
+	.on('submit', function (this: Modal, data: ModalExportData) {
 		if (!data) return;
 		master.scale?.updateInfo({ color: data.color });
 		this.hide();
@@ -219,7 +220,7 @@ editScale
 
 let scaleClickCounter = 3;
 newScale
-	.on('submit', function (data) {
+	.on('submit', function (this: Modal, data: ModalExportData) {
 		if (!data) return;
 		master.state.mode = 'newScale';
 		scaleClickCounter = 1;
@@ -257,15 +258,15 @@ newScale
 		});
 		this.hide().clear();
 	})
-	.on('cancel', function () {
+	.on('cancel', function (this: Modal) {
 		this.hide().clear();
 	});
 
 editTrack
-	.on('cancel', function () {
+	.on('cancel', function (this: Modal) {
 		this.hide().clear();
 	})
-	.on('submit', function (data) {
+	.on('submit', function (this: Modal, data: ModalExportData) {
 		if (!data) return;
 		if (master.trackList[data.uid] !== undefined) {
 			master.trackList[data.uid].update({
@@ -277,10 +278,10 @@ editTrack
 	});
 
 newTrack
-	.on('cancel', function () {
+	.on('cancel', function (this: Modal) {
 		this.hide().clear();
 	})
-	.on('submit', function (data) {
+	.on('submit', function (this: Modal, data: ModalExportData) {
 		if (!data) return;
 		this.hide().clear();
 		master.newTrack(data.name, data.color, true);
