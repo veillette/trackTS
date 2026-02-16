@@ -1,6 +1,6 @@
 # trackTS
 
-A web-based video analysis and modeling software, and a fork of [JStrack](https://github.com/lucademian/JStrack).
+A web-based video analysis and modeling software, and a fork of [JsTrack](https://github.com/lucademian/JsTrack).
 
 Extract position data from objects in a video for motion tracking and analysis.
 
