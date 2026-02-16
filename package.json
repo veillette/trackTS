@@ -1,7 +1,7 @@
 {
   "name": "trackTS",
   "version": "1.0.0",
-  "description": "Web-based Tracker - Get position data from objects in a video",
+  "description": "Web-based Video Modeling and Analysis- Get position data from objects in a video",
   "private": true,
   "scripts": {
     "build": "vite build",
