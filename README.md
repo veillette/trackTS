@@ -24,7 +24,7 @@ npm install
 npm run build
 ```
 
-Then open `index.html` in your browser. No server is required.
+Then open `index.html` in your browser with a server.
 
 ## Development
 
