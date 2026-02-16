@@ -1,39 +1,61 @@
+/**
+ * trackTS Info Page - Scroll Reveal Animations
+ * Uses native Intersection Observer API (no dependencies)
+ */
 (function () {
-  const docElement = document.documentElement;
+  "use strict";
 
   // Replace 'no-js' class with 'js' to indicate JavaScript is enabled
-  docElement.classList.remove("no-js");
-  docElement.classList.add("js");
+  document.documentElement.classList.remove("no-js");
+  document.documentElement.classList.add("js");
 
-  // Initialize scroll reveal animations if the page has animations enabled
-  if (document.body.classList.contains("has-animations")) {
-    const sr = (window.sr = ScrollReveal());
-
-    // Reveal hero section elements
-    sr.reveal(".hero-title, .hero-paragraph, .newsletter-header, .newsletter-form", {
-      duration: 1000,
-      distance: "40px",
-      easing: "cubic-bezier(0.5, -0.01, 0, 1.005)",
-      origin: "bottom",
-      interval: 150,
+  // Only initialize if animations are enabled
+  if (!document.body.classList.contains("has-animations")) {
+    // If no animations, make all reveal elements visible immediately
+    document.querySelectorAll(".reveal, .reveal-scale").forEach((el) => {
+      el.classList.add("revealed");
     });
+    return;
+  }
 
-    // Reveal bubble decorations and browser mockup
-    sr.reveal(".bubble-3, .bubble-4, .hero-browser-inner, .bubble-1, .bubble-2", {
-      duration: 1000,
-      scale: 0.95,
-      easing: "cubic-bezier(0.5, -0.01, 0, 1.005)",
-      interval: 150,
-    });
+  /**
+   * Initialize scroll reveal using Intersection Observer
+   */
+  function initScrollReveal() {
+    const revealElements = document.querySelectorAll(".reveal, .reveal-scale");
 
-    // Reveal feature cards
-    sr.reveal(".feature", {
-      duration: 600,
-      distance: "40px",
-      easing: "cubic-bezier(0.5, -0.01, 0, 1.005)",
-      interval: 100,
-      origin: "bottom",
-      viewFactor: 0.5,
-    });
+    if (!revealElements.length) return;
+
+    // Check for Intersection Observer support
+    if (!("IntersectionObserver" in window)) {
+      // Fallback: show all elements immediately
+      revealElements.forEach((el) => el.classList.add("revealed"));
+      return;
+    }
+
+    const observerOptions = {
+      root: null,
+      rootMargin: "0px",
+      threshold: 0.15,
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("revealed");
+          // Stop observing once revealed
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    revealElements.forEach((el) => observer.observe(el));
+  }
+
+  // Initialize when DOM is ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initScrollReveal);
+  } else {
+    initScrollReveal();
   }
 })();
