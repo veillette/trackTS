@@ -135,15 +135,6 @@ declare namespace createjs {
 	}
 }
 
-// ─── Color Picker (CP) ───
-
-declare class CP {
-	constructor(target: HTMLInputElement);
-	target: HTMLInputElement;
-	on(event: string, callback: (this: CP, color: string) => void): void;
-	set(color: string): void;
-}
-
 // ─── Google API ───
 
 declare namespace gapi {

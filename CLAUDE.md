@@ -4,7 +4,7 @@ This file provides guidance to Claude Code when working with the trackTS codebas
 
 ## Project Overview
 
-trackTS is a web-based video tracking application — a TypeScript port of the physics education software [Tracker](https://physlets.org/tracker/). It allows users to extract position data from objects in videos for motion analysis.
+trackTS is a web-based video tracking application. It allows users to extract position data from objects in videos for motion analysis.
 
 ## Build & Development Commands
 

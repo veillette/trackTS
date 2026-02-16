@@ -81,13 +81,6 @@ Each library below is loaded via a `<script>` tag in `index.html` and exposes gl
 - **Globals used:** `keyboardJS.on()`, `keyboardJS.pause()`, `keyboardJS.resume()`
 - **Notes:** The npm package includes TypeScript types.
 
-### Color Picker (CP)
-
-- **Vendored files:** `src/colorpicker/color-picker.min.js`, `src/colorpicker/color-picker.min.css`
-- **npm package:** [`@aspect/color-picker`](https://www.npmjs.com/package/@aspect/color-picker) or similar — check the original source
-- **Globals used:** `CP` class
-- **Notes:** Identify the exact library/version before migrating. CSS would need separate handling.
-
 ### math.js
 
 - **Vendored file:** `src/math.min.js`

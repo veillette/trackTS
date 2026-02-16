@@ -16,7 +16,6 @@ export interface ModalFieldSchema {
 	defaultValue?: string | number;
 	id?: string;
 	element?: HTMLDivElement;
-	picker?: CP;
 }
 
 export interface ModalButtonSchema {
@@ -217,10 +216,6 @@ export class Modal extends EventEmitter {
 				}
 			}
 			formItemInput.value = String(this.fields[field].initVal);
-			if (this.fields[field].type === 'color') {
-				formItemInput.style.background = String(this.fields[field].initVal);
-				this.fields[field].picker?.set(String(this.fields[field].initVal));
-			}
 
 			if (this.fields[field].type !== 'hidden') {
 				const formItemLabel = document.createElement('label');
@@ -336,10 +331,6 @@ export class Modal extends EventEmitter {
 					const el = document.getElementById(fieldId) as HTMLInputElement | null;
 					if (el) {
 						el.value = value[field];
-						if (this.fields[field].type === 'color') {
-							this.fields[field].picker?.set(value[field]);
-							el.style.background = value[field];
-						}
 					}
 				}
 			}

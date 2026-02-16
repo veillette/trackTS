@@ -413,19 +413,17 @@ body > .scale-draggable {
 .modal .form-item + .form-item {
     margin-top: 20px;
 }
-.modal .form-item input:not(.colorpicker) {
+.modal .form-item input:not([type="color"]) {
     padding: 8px 10px;
     border: 1px lightgrey solid;
     border-radius: 3px;
 }
-.modal .form-item input.colorpicker {
-    background: #FFF;
-    border: none;
-    color: transparent;
-    overflow: hidden;
-    border-radius: 15px;
-    width: 25px;
-    height: 25px;
+.modal .form-item input[type="color"] {
+    border: 1px lightgrey solid;
+    border-radius: 4px;
+    width: 36px;
+    height: 28px;
+    padding: 2px;
     vertical-align: middle;
     cursor: pointer;
 }
