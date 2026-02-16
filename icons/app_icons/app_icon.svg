@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="64" fill="#00ff95"/>
+
+  <!-- TTS Text -->
+  <text x="256" y="320"
+        font-family="Arial, Helvetica, sans-serif"
+        font-weight="bold"
+        font-size="200"
+        text-anchor="middle"
+        fill="#004d2e">TTS</text>
+
+  <!-- Dashed track line going through the text -->
+  <line x1="60" y1="380" x2="452" y2="140"
+        stroke="#004d2e"
+        stroke-width="16"
+        stroke-dasharray="40 20"
+        stroke-linecap="round"/>
+
+  <!-- Track points (dots along the path) -->
+  <circle cx="100" cy="356" r="12" fill="#004d2e"/>
+  <circle cx="180" cy="308" r="12" fill="#004d2e"/>
+  <circle cx="256" cy="262" r="12" fill="#004d2e"/>
+  <circle cx="332" cy="216" r="12" fill="#004d2e"/>
+  <circle cx="412" cy="168" r="12" fill="#004d2e"/>
+</svg>
