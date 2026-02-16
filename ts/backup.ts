@@ -187,6 +187,7 @@ if (backupRaw) {
 					const data = await fetchBinaryContent(fileUrl);
 					const zipData = await JSZip.loadAsync(data);
 					const videoBlob = await zipData.file('video.mp4')?.async('blob');
+					if (!videoBlob) return;
 					loadVideo(videoBlob, async () => {
 						if (backupInfo.data) {
 							const dataFile = dataURLtoBlob(backupInfo.data);
@@ -194,6 +195,7 @@ if (backupRaw) {
 							const innerData = await fetchBinaryContent(dataFileUrl);
 							const innerZipData = await JSZip.loadAsync(innerData);
 							const projectJson = await innerZipData.file('meta.json')?.async('text');
+							if (!projectJson) return;
 							master.load(JSON.parse(projectJson));
 							hideLoader();
 							hideLaunchModal();
@@ -207,6 +209,7 @@ if (backupRaw) {
 					const data = await fetchBinaryContent(fileUrl);
 					const zipData = await JSZip.loadAsync(data);
 					const projectJson = await zipData.file('meta.json')?.async('text');
+					if (!projectJson) return;
 					let videoName = '';
 					let rawVideoName = '';
 					if (backupInfo.videoName) {

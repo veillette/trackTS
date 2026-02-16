@@ -15,14 +15,16 @@ import { drawGraphics } from './index';
 interact('#sidebar')
 	.resizable({
 		edges: { left: true },
-		restrictEdges: {
-			outer: 'parent',
-			endOnly: true,
-		},
-		restrictSize: {
-			min: { width: 400 },
-			max: { width: window.innerWidth - 300 },
-		},
+		modifiers: [
+			interact.modifiers.restrictEdges({
+				outer: 'parent',
+				endOnly: true,
+			}),
+			interact.modifiers.restrictSize({
+				min: { width: 400, height: 0 },
+				max: { width: window.innerWidth - 300, height: Infinity },
+			}),
+		],
 		inertia: true,
 	})
 	.on('resizemove', (event: InteractEvent) => {
@@ -38,20 +40,27 @@ interact('#sidebar')
 const sidebarEl = document.getElementById('sidebar');
 const panelMove = dragula(sidebarEl ? [sidebarEl] : [], {
 	direction: 'vertical',
-	moves: (_el: HTMLElement, _source: HTMLElement, handle: HTMLElement) => {
-		if (!handle.classList.contains('handle-bar')) {
+	moves: (el, _source, handle) => {
+		if (!el || !handle) return false;
+		const handleEl = handle as HTMLElement;
+		if (!handleEl.classList.contains('handle-bar')) {
 			return false;
-		} else {
-			handle.style.cursor = 'grabbing';
-			return true;
 		}
+		handleEl.style.cursor = 'grabbing';
+		return true;
 	},
 });
 
 let scroll = 0;
 let scrollInterval: ReturnType<typeof setInterval> | null = null;
-panelMove
-	.on('drag', (el: HTMLElement) => {
+
+// Use type assertion for dragula events not in @types/dragula
+const panelMoveEvents = panelMove as unknown as {
+	on(event: 'drag' | 'dragend', callback: (el: Element) => void): typeof panelMoveEvents;
+};
+
+panelMoveEvents
+	.on('drag', (el) => {
 		const handleBar = el.querySelector('.handle-bar') as HTMLElement | null;
 		if (handleBar) handleBar.style.cursor = 'grabbing';
 		scrollInterval = setInterval(() => {
@@ -74,7 +83,7 @@ panelMove
 			if (sidebarScroll) sidebarScroll.scrollTop += scroll * 20;
 		}, 100);
 	})
-	.on('dragend', (el: HTMLElement) => {
+	.on('dragend', (el) => {
 		const handleBar = el.querySelector('.handle-bar') as HTMLElement | null;
 		if (handleBar) handleBar.style.cursor = 'grab';
 		if (scrollInterval !== null) {

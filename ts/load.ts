@@ -29,9 +29,11 @@ export async function loadProject(file: File, callback: (() => void) | null = nu
 
 	if (zipData.files['video.mp4'] !== undefined) {
 		const videoBlob = await zipData.file('video.mp4')?.async('blob');
-		loadVideo(videoBlob as Blob, async () => {
+		if (!videoBlob) return;
+		loadVideo(videoBlob, async () => {
 			if (zipData.files['meta.json'] !== undefined) {
 				const projectJson = await zipData.file('meta.json')?.async('text');
+				if (!projectJson) return;
 				master.load(JSON.parse(projectJson));
 				hideLoader();
 				master.saved = true;

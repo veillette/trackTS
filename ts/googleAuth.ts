@@ -34,7 +34,7 @@ function waitForGis(): Promise<void> {
 		const check = () => {
 			if (
 				typeof google !== 'undefined' &&
-				google.accounts?.oauth2?.initTokenClient
+				google.accounts?.oauth2?.initTokenClient !== undefined
 			) {
 				resolve();
 				return;

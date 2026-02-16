@@ -50,7 +50,7 @@ export class Table {
 		const data = this.tableData;
 		this.track.project.handsOnTable.updateSettings(settings);
 		if (data.length > 0) this.track.project.handsOnTable.loadData(data);
-		else this.track.project.handsOnTable.loadData([null]);
+		else this.track.project.handsOnTable.loadData([]);
 	}
 
 	newCols(columns: TableColumns): void {

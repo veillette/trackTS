@@ -87,7 +87,7 @@ const tableContainer = document.getElementById('table') as HTMLDivElement;
 export const master = new Project(
 	'My Project',
 	new Timeline(canvas.width, canvas.height, document.getElementById('video') as HTMLVideoElement, 30),
-	new Handsontable(tableContainer),
+	new Handsontable(tableContainer, {}),
 	stage,
 	background,
 );

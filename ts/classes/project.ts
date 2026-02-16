@@ -9,8 +9,8 @@
  */
 
 import type Handsontable from 'handsontable';
-import type { UndoManagerInstance } from 'undo-manager';
 import UndoManager from 'undo-manager';
+type UndoManagerInstance = ReturnType<typeof UndoManager>;
 import { roundTo } from '../functions';
 import { Axes, type Coordinate } from './axes';
 import { CoordinateMapper } from './coordinate-mapper';
@@ -135,7 +135,7 @@ export class Project extends EventEmitter {
 			rowHeaders: false,
 			colHeaders: true,
 			startRows: 3,
-			fixedColsLeft: 1,
+			fixedColumnsStart: 1,
 			preventOverflow: 'horizontal',
 			type: 'numeric',
 			stretchH: 'last',

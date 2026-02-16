@@ -138,34 +138,33 @@ declare namespace createjs {
 // ─── Google API ───
 
 declare namespace gapi {
-	namespace auth {
-		function getToken(): { access_token: string } | null;
-		function authorize(
-			params: {
-				client_id: string;
-				scope: string;
-				immediate: boolean;
-				authuser?: number;
-			},
-			callback?: () => void,
-		): void;
-		function signOut(): void;
-	}
+	function load(
+		libraries: string,
+		options: { callback: () => void; onerror?: (error: unknown) => void },
+	): void;
 	namespace client {
 		function setApiKey(key: string): void;
-		function load(api: string, version: string, callback: () => void): void;
+		function load(urlOrObject: string): Promise<void>;
 		namespace drive {
 			namespace files {
-				function get(params: { fileId: string }): { execute: (callback: (file: DriveFile) => void) => void };
+				function get(params: {
+					fileId: string;
+					fields?: string;
+				}): gapi.client.Request<{ id?: string; name?: string; mimeType?: string }>;
 			}
 		}
-		function request(params: {
+		function request<T = unknown>(params: {
 			path: string;
 			method: string;
 			params?: Record<string, string>;
 			headers?: Record<string, string | number>;
 			body?: Record<string, string>;
-		}): { then: (callback: (response: { headers: { location: string } }) => void) => void };
+		}): gapi.client.Request<T>;
+		interface Request<T> {
+			then<R>(
+				onFulfilled: (response: { result: T; headers?: Record<string, string> }) => R,
+			): Promise<R>;
+		}
 	}
 }
 
@@ -210,19 +209,34 @@ declare namespace google {
 			LIST,
 		}
 
+		interface DocumentObject {
+			id?: string;
+			name?: string;
+			mimeType?: string;
+		}
+
+		interface ResponseObject {
+			action: Action | string;
+			docs?: DocumentObject[];
+		}
+
 		class DocsView {
 			constructor(viewId: ViewId);
 			setMimeTypes(types: string): void;
 			setMode(mode: DocsViewMode): void;
 		}
 
+		class Picker {
+			setVisible(visible: boolean): void;
+		}
+
 		class PickerBuilder {
 			addView(view: DocsView): PickerBuilder;
 			setAppId(appId: string): PickerBuilder;
+			setDeveloperKey(key: string): PickerBuilder;
 			setOAuthToken(token: string): PickerBuilder;
-			setCallback(callback: (data: Record<string, unknown>) => void): PickerBuilder;
-			build(): PickerBuilder;
-			setVisible(visible: boolean): PickerBuilder;
+			setCallback(callback: (data: ResponseObject) => void): PickerBuilder;
+			build(): Picker;
 			setTitle(title: string): void;
 		}
 	}
@@ -237,3 +251,18 @@ interface DriveFile {
 // ─── Google Analytics ───
 
 declare function gtag(command: string, action: string, params?: Record<string, string>): void;
+
+// ─── KeyboardJS ───
+
+interface KeyboardJSEvent {
+	preventRepeat(): void;
+	preventDefault(): void;
+	key: string;
+}
+
+// ─── Interact.js ───
+
+interface InteractEvent {
+	target: HTMLElement;
+	rect: { width: number; height: number };
+}

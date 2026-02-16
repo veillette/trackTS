@@ -186,17 +186,7 @@ export class Modal extends EventEmitter {
 			formItem.setAttribute('data-key', field);
 			const formInputId = `${this.id}_input-${field}`;
 			const formItemInput = document.createElement('input');
-			if (this.fields[field].type === 'color') {
-				formItemInput.type = 'text';
-				formItemInput.classList.add('colorpicker');
-				this.fields[field].picker = new CP(formItemInput);
-				this.fields[field].picker?.on('change', function (this: CP, color: string) {
-					this.target.value = `#${color}`;
-					this.target.style.background = `#${color}`;
-				});
-			} else {
-				formItemInput.type = this.fields[field].type;
-			}
+			formItemInput.type = this.fields[field].type;
 			formItemInput.name = formInputId;
 			formItemInput.id = formInputId;
 			formItemInput.setAttribute('data-key', field);
