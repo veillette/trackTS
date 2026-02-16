@@ -115,10 +115,10 @@ saveProject
 									const data = await fetchBinaryContent(fileUrl);
 
 									const exported = this.export();
-										let filename =
-											exported && typeof exported === 'object'
-												? (exported as Record<string, string>).filename ?? ''
-												: '';
+									let filename =
+										exported && typeof exported === 'object'
+											? ((exported as Record<string, string>).filename ?? '')
+											: '';
 									if (filename.length === 0) {
 										filename = `${master.name.toLowerCase().replace(' ', '_')}-${Date.now()}.${CUSTOM_EXTENSION}`;
 									} else if (filename.split('.').pop() !== CUSTOM_EXTENSION)
