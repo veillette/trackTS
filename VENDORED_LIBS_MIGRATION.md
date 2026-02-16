@@ -19,6 +19,22 @@ The `src/` directory contains vendored (manually copied) JavaScript libraries lo
   7. Deleted `src/undomanager.js`.
   8. Verified with `npm run build` and `npm run lint`.
 
+### ffmpeg
+
+- **Vendored file:** `src/ffmpeg-worker-mp4.js` (removed, was ~12MB)
+- **npm packages:** [`@ffmpeg/ffmpeg`](https://www.npmjs.com/package/@ffmpeg/ffmpeg), [`@ffmpeg/util`](https://www.npmjs.com/package/@ffmpeg/util)
+- **Install:** `npm install @ffmpeg/ffmpeg @ffmpeg/util`
+- **Steps taken:**
+  1. Installed `@ffmpeg/ffmpeg` and `@ffmpeg/util` via npm.
+  2. Created a new `ts/videoConverter.ts` module with async/Promise-based API.
+  3. The module uses the single-threaded FFmpeg core (loaded from CDN) to avoid SharedArrayBuffer/COOP/COEP header requirements.
+  4. Updated `ts/handlefiles.ts` to import and use the new `convertToMp4()` function.
+  5. Replaced the Web Worker message-passing code with clean async/await calls.
+  6. Added proper error handling with user-friendly alert modals.
+  7. Deleted the vendored `src/ffmpeg-worker-mp4.js` file (saves ~12MB).
+  8. Verified with `npm run build` and TypeScript check.
+- **Notes:** The WASM core (~30MB) is loaded on-demand from unpkg CDN when video conversion is first requested, keeping the initial bundle small.
+
 ## Remaining Vendored Libraries
 
 Each library below is loaded via a `<script>` tag in `index.html` and exposes globals consumed by TypeScript code (typed in `ts/externals.d.ts`).
@@ -101,12 +117,6 @@ Each library below is loaded via a `<script>` tag in `index.html` and exposes gl
 - **npm package:** [`jquery`](https://www.npmjs.com/package/jquery)
 - **Notes:** Check if jQuery is still actively used in the codebase. It may have been replaced by native DOM APIs during the TypeScript port. If unused, it can simply be removed.
 
-### ffmpeg
-
-- **Vendored file:** `src/ffmpeg-worker-mp4.js`
-- **npm package:** [`@ffmpeg/ffmpeg`](https://www.npmjs.com/package/@ffmpeg/ffmpeg)
-- **Notes:** This is a Web Worker build. The modern `@ffmpeg/ffmpeg` package uses WebAssembly and has a different API. Migration would require rewriting the integration code.
-
 ## General Migration Steps
 
 For each library:
@@ -139,4 +149,3 @@ Higher risk (license changes, large API surface, or major version differences):
 8. **SheetJS (XLSX)** — license model change
 9. **math.js** — large bundle size consideration
 10. **CreateJS** — unmaintained, most pervasive in codebase
-11. **ffmpeg** — completely different modern API

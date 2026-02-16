@@ -7,6 +7,7 @@ import { alertModal, confirmModal } from './classes/modal';
 import { hideLoader, showLoader } from './functions';
 import { CUSTOM_EXTENSION, master, newProject, VIDEO_CONVERTOR } from './globals';
 import { dataLoaded, hideLaunchModal, loadProject, loadVideo } from './load';
+import { convertToMp4 } from './videoConverter';
 
 export async function handleFile(
 	file: File | (Blob & { name?: string; type?: string }),
@@ -86,51 +87,30 @@ export async function handleFile(
 						event_label: fileType,
 					});
 					showLoader();
-					const filereader = new FileReader();
-					filereader.onload = (result: ProgressEvent<FileReader>) => {
-						const fileData = result.target?.result as ArrayBuffer;
-
-						const worker = new Worker('src/ffmpeg-worker-mp4.js');
-						worker.onmessage = (
-							e: MessageEvent<{ type: string; data: { MEMFS: Array<{ data: ArrayBuffer }> } | string }>,
-						) => {
-							const msg = e.data;
-							switch (msg.type) {
-								case 'ready':
-									worker.postMessage({
-										MEMFS: [{ name: fileName, data: fileData }],
-										type: 'run',
-										arguments: ['-i', fileName, '-vcodec', 'copy', '-acodec', 'copy', 'out.mp4'],
-									});
-									break;
-								case 'done': {
-									const result = (msg.data as { MEMFS: Array<{ data: ArrayBuffer }> }).MEMFS[0];
-									const dotIndex = fileName.indexOf('.');
-									const name = fileName.substring(0, dotIndex !== -1 ? dotIndex : fileName.length);
-									const blob = new File([result.data], `${name}.mp4`, {
-										type: 'video/mp4',
-									});
-									master.videoName = blob.name;
-									loadVideo(blob, () => {
-										if (callback !== null) callback();
-										master.timeline.detectFrameRate((framerate: number) => {
-											hideLaunchModal();
-											newProject.push({ framerate: String(framerate) });
-											newProject.show();
-											hideLoader();
-										});
-									});
-
-									gtag('event', 'Convertor Done', {
-										event_category: 'Start',
-										event_label: fileType,
-									});
-									break;
-								}
-							}
-						};
-					};
-					filereader.readAsArrayBuffer(file as File);
+					try {
+						const convertedFile = await convertToMp4(file as File);
+						master.videoName = convertedFile.name;
+						loadVideo(convertedFile, () => {
+							if (callback !== null) callback();
+							master.timeline.detectFrameRate((framerate: number) => {
+								hideLaunchModal();
+								newProject.push({ framerate: String(framerate) });
+								newProject.show();
+								hideLoader();
+							});
+						});
+						gtag('event', 'Convertor Done', {
+							event_category: 'Start',
+							event_label: fileType,
+						});
+					} catch (error) {
+						console.error('Video conversion failed:', error);
+						hideLoader();
+						await alertModal(
+							'Video conversion failed. Please try converting your video to MP4 using an external tool.',
+							'Conversion Error',
+						);
+					}
 				} else if (
 					await confirmModal(
 						'Would you like to open a free online video converter in another tab?',
