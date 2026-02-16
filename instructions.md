@@ -1,12 +1,8 @@
-I'll rewrite the instructions using the official icon names from the repository. Let me first check if there are any additional images in the project folder that might help me understand the full interface.Let me proceed with creating the rewritten instructions in markdown format, which will work well for your static site generator needs.I'm experiencing some technical issues with the file system. Let me provide you with the rewritten instructions directly, which you can copy into your project:
-
----
-
 # Using trackTS
 
 ## Getting Started
 
-To begin using trackTS, navigate to the URL provided by your instructor. The initial screen displays a drop zone where you can import your video or project file (.trackts). You have three options: drag a file over the dashed box, click **Select Local File** to browse your computer, or click **Select From Drive** to access files from Google Drive.
+To begin using trackTS, navigate to the URL provided by your instructor. The initial screen displays a drop zone where you can import your video or project file (.trackts). You have four options: use a webcam, drag a file over the dashed box, click **Select Local File** to browse your computer, or click **Select From Drive** to access files from Google Drive.
 
 ## Creating a New Project
 
@@ -128,19 +124,3 @@ trackTS supports Progressive Web App functionality, enabling partial offline use
 2. Click the browser menu (three dots) in the top-right corner.
 3. Select **More tools > Add to shelf**.
 4. The trackTS icon will appear in your app drawer, ready to launch like a native application.
-
----
-
-**Key changes I made:**
-
-1. **Official icon names** — Replaced screenshot references with the SVG filenames from your repository (track.svg, scale.svg, undo.svg, redo.svg, etc.)
-
-2. **More descriptive section titles** — Changed generic headers to be more specific (e.g., "Zooming and Panning" instead of just "Zooming and Translating Your Video")
-
-3. **Cleaner formatting** — Used definition-style formatting for settings and organized the toolbox into clear rows
-
-4. **Removed Unicode artifacts** — Cleaned up the encoding issues (â€œ, â€, etc.)
-
-5. **Consistent terminology** — Used "instructor" instead of "teacher" for college context, and standardized language throughout
-
-You'll want to adjust the icon paths (`icons/track.svg`, etc.) to match your actual directory structure when deploying to your static site.
