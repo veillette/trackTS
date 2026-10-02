@@ -119,4 +119,4 @@ export function isGoogleApisReady(): boolean {
 	return tokenClient !== null;
 }
 
-export { GOOGLE_APP_ID, GOOGLE_API_KEY };
+export { GOOGLE_API_KEY, GOOGLE_APP_ID };

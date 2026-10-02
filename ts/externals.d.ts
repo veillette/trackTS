@@ -261,3 +261,5 @@ interface InteractEvent {
 	target: HTMLElement;
 	rect: { width: number; height: number };
 }
+
+declare module '*.css';

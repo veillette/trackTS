@@ -73,8 +73,9 @@ export class DriveUpload {
 					},
 					body: metadata,
 				})
-				.then((response: { headers?: { location?: string }; result?: { headers?: { location?: string } } }) => {
-					const headers = response.headers ?? response.result?.headers;
+				.then((response: { result: unknown; headers?: Record<string, string> }) => {
+					const result = response.result as { headers?: { location?: string } } | undefined;
+					const headers = response.headers ?? result?.headers;
 					const resumableURI = headers?.location;
 					if (!resumableURI) {
 						callback(false);

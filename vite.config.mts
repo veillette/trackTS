@@ -2,14 +2,18 @@ import { defineConfig } from 'vite';
 import { resolve } from 'node:path';
 
 export default defineConfig({
+  define: {
+    // dragula's dependencies reference Node's `global`
+    global: 'globalThis',
+  },
   build: {
     outDir: 'dist',
     sourcemap: true,
     emptyOutDir: true,
-    rollupOptions: {
+    rolldownOptions: {
       input: {
-        bundle: resolve(__dirname, 'ts/main.ts'),
-        help: resolve(__dirname, 'ts/help.ts'),
+        bundle: resolve(import.meta.dirname, 'ts/main.ts'),
+        help: resolve(import.meta.dirname, 'ts/help.ts'),
       },
       output: {
         format: 'es',
@@ -20,7 +24,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'ts'),
+      '@': resolve(import.meta.dirname, 'ts'),
     },
   },
 });
