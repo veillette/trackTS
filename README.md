@@ -15,7 +15,6 @@ Extract position data from objects in a video for motion tracking and analysis.
 - Save/load `.trackts` project files (ZIP format with embedded video)
 - Google Drive integration for cloud storage
 - Keyboard shortcuts and undo/redo support
-- Progressive Web App (PWA) support for offline use
 
 ## Install & Build
 

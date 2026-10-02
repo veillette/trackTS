@@ -118,7 +118,7 @@ Follow these steps to track motion in your video:
 
 ## Installing trackTS as a Progressive Web App (Chromebook)
 
-trackTS supports Progressive Web App functionality, enabling partial offline use and a native-like application experience.
+trackTS can be installed as an app for a native-like experience. An internet connection is still required.
 
 1. Navigate to the trackTS URL provided by your instructor.
 2. Click the browser menu (three dots) in the top-right corner.
