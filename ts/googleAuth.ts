@@ -71,7 +71,11 @@ export function initGoogleApis(): Promise<void> {
 				}
 			},
 		});
-	})();
+	})().catch((err: unknown) => {
+		// Allow a later call to retry instead of caching the failure forever
+		initPromise = null;
+		throw err;
+	});
 	return initPromise;
 }
 

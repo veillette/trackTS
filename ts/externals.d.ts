@@ -22,6 +22,8 @@ declare namespace createjs {
 	}
 
 	class Graphics {
+		clear(): Graphics;
+		setStrokeDash(segments?: number[] | null, offset?: number): Graphics;
 		beginFill(color: string): Graphics;
 		beginStroke(color: string): Graphics;
 		endStroke(): Graphics;

@@ -148,7 +148,7 @@ saveProject
 				}
 			})
 			.catch((err) => {
-				console.error('Google API failed to load within timeout', err);
+				console.error('Google APIs failed to initialize', err);
 			});
 	})
 	.on('cancel', function (this: Modal) {

@@ -20,7 +20,7 @@ export function loadOpenCV(): Promise<void> {
 		script.async = true;
 
 		// OpenCV.js calls Module.onRuntimeInitialized when WASM is ready
-		(window as Record<string, unknown>).Module = {
+		(window as unknown as Record<string, unknown>).Module = {
 			onRuntimeInitialized: () => resolve(),
 		};
 
